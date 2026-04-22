@@ -1,92 +1,56 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Calculadora de Tabla de Verdad</title>
+import streamlit as st
+import itertools
+
+# 🎨 Estilos
+st.markdown("""
 <style>
 body {
-    font-family: Arial;
+    background-color: #f4f4f4;
+}
+.titulo {
     text-align: center;
-    background: #f4f4f4;
+    color: #333;
 }
-.container {
-    margin-top: 50px;
-}
-input {
-    width: 300px;
-    padding: 10px;
-    font-size: 16px;
-}
-button {
-    padding: 10px 20px;
-    margin: 10px;
-    font-size: 16px;
-}
-table {
-    margin: 20px auto;
-    border-collapse: collapse;
-}
-td, th {
-    border: 1px solid black;
-    padding: 8px;
+.caja {
+    display: flex;
+    justify-content: center;
 }
 </style>
-</head>
+""", unsafe_allow_html=True)
 
-<body>
+st.markdown("<h1 class='titulo'>🧮 Calculadora de Tabla de Verdad</h1>", unsafe_allow_html=True)
 
-<div class="container">
-    <h2>Calculadora de Tabla de Verdad</h2>
+# 📥 Entrada
+expr = st.text_input("Escribe la expresión lógica:", placeholder="Ej: p and q or not p")
+
+st.info("Usa: and (∧), or (∨), not (¬)")
+
+# 🔘 Botón
+if st.button("Calcular"):
     
-    <input type="text" id="expresion" placeholder="Ej: p && q || !p">
-    <br>
-    <button onclick="generarTabla()">Calcular</button>
+    variables = sorted(set([c for c in expr if c in "pqrst"]))
 
-    <div id="resultado"></div>
-</div>
+    if not variables:
+        st.error("❌ Expresión inválida")
+    else:
+        filas = list(itertools.product([True, False], repeat=len(variables)))
 
-<script>
-function generarTabla() {
-    let expr = document.getElementById("expresion").value;
+        tabla = []
 
-    let variables = Array.from(new Set(expr.match(/[pqrst]/g)));
+        for fila in filas:
+            valores = dict(zip(variables, fila))
+            try:
+                resultado = eval(expr, {}, valores)
+                fila_resultado = ["V" if v else "F" for v in fila]
+                fila_resultado.append("V" if resultado else "F")
+                tabla.append(fila_resultado)
+            except:
+                st.error("❌ Error en la expresión")
+                break
 
-    if (!variables) {
-        alert("Ingresa una expresión válida");
-        return;
-    }
+        # 📊 Mostrar tabla
+        st.subheader("Tabla de verdad")
+        st.table(tabla)
 
-    let filas = Math.pow(2, variables.length);
-    let tabla = "<table><tr>";
-
-    // Encabezado
-    variables.forEach(v => tabla += `<th>${v}</th>`);
-    tabla += "<th>Resultado</th></tr>";
-
-    for (let i = 0; i < filas; i++) {
-        let valores = {};
-        tabla += "<tr>";
-
-        variables.forEach((v, j) => {
-            let valor = (i >> (variables.length - j - 1)) & 1;
-            valores[v] = valor ? true : false;
-            tabla += `<td>${valor ? "V" : "F"}</td>`;
-        });
-
-        try {
-            let resultado = eval(expr.replace(/[pqrst]/g, m => valores[m]));
-            tabla += `<td>${resultado ? "V" : "F"}</td>`;
-        } catch {
-            tabla += "<td>Error</td>";
-        }
-
-        tabla += "</tr>";
-    }
-
-    tabla += "</table>";
-    document.getElementById("resultado").innerHTML = tabla;
-}
-</script>
-
-</body>
-</html>
+        # Encabezados
+        st.write("Columnas:", variables + ["Resultado"])
