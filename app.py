@@ -1,40 +1,47 @@
 import streamlit as st
 import itertools
 
-# 🎨 Estilos
-st.markdown("""
-<style>
-body {
-    background-color: #f4f4f4;
-}
-.titulo {
-    text-align: center;
-    color: #333;
-}
-.caja {
-    display: flex;
-    justify-content: center;
-}
-</style>
-""", unsafe_allow_html=True)
+st.title("🧮 Calculadora de Tabla de Verdad")
 
-st.markdown("<h1 class='titulo'>🧮 Calculadora de Tabla de Verdad</h1>", unsafe_allow_html=True)
+# 🔹 Inicializar expresión
+if "expr" not in st.session_state:
+    st.session_state.expr = ""
 
-# 📥 Entrada
-expr = st.text_input("Escribe la expresión lógica:", placeholder="Ej: p and q or not p")
+# 🔹 Mostrar expresión
+st.text_input("Expresión:", value=st.session_state.expr, key="input_expr")
 
-st.info("Usa: and (∧), or (∨), not (¬)")
+# 🔹 Función para agregar texto
+def agregar(valor):
+    st.session_state.expr += valor
 
-# 🔘 Botón
+# 🔹 Botones tipo calculadora
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.button("p", on_click=agregar, args=("p ",))
+    st.button("q", on_click=agregar, args=("q ",))
+    st.button("r", on_click=agregar, args=("r ",))
+
+with col2:
+    st.button("AND", on_click=agregar, args=("and ",))
+    st.button("OR", on_click=agregar, args=("or ",))
+    st.button("NOT", on_click=agregar, args=("not ",))
+
+with col3:
+    st.button("(", on_click=agregar, args=("(",))
+    st.button(")", on_click=agregar, args=(")",))
+    st.button("CLEAR", on_click=lambda: st.session_state.update(expr=""))
+
+# 🔹 Botón calcular
 if st.button("Calcular"):
-    
+    expr = st.session_state.expr
+
     variables = sorted(set([c for c in expr if c in "pqrst"]))
 
     if not variables:
         st.error("❌ Expresión inválida")
     else:
         filas = list(itertools.product([True, False], repeat=len(variables)))
-
         tabla = []
 
         for fila in filas:
@@ -48,9 +55,6 @@ if st.button("Calcular"):
                 st.error("❌ Error en la expresión")
                 break
 
-        # 📊 Mostrar tabla
-        st.subheader("Tabla de verdad")
-        st.table(tabla)
-
-        # Encabezados
+        st.subheader("📊 Tabla de verdad")
         st.write("Columnas:", variables + ["Resultado"])
+        st.table(tabla)
